@@ -12,29 +12,91 @@ ApplicationWindow {
     title: qsTr("Pinch Example")
 
     visibility: Window.AutomaticVisibility
+/*
+    Rectangle {
+        id: redRect
+        width: 200
+        height: 200
+        color: "red"
 
+        Rectangle {
+            id: blueRect
+            //x: 75; y: 75
+            x: 85; y: 85
+            width: 50; height: 50
+            color: "blue"
+
+            Rectangle {
+                id: greenRect
+                x: 10; y: 10
+                width: 10; height: 10
+                color: "green"
+            }
+        }
+
+        Rectangle {
+            id: yellowRect
+            x: 95; y: 95
+            width: 10; height: 10
+            color: "yellow"
+        }
+
+        Rectangle {
+            x: 0; y: 99
+            width: 200; height: 2
+            color: "black"
+        }
+
+        Rectangle {
+            x: 99; y: 0
+            width: 2; height: 200
+            color: "black"
+        }
+
+        MouseArea {
+            anchors.fill: parent
+
+            onClicked: {
+                console.log("blueRect:", blueRect.x, blueRect.y, blueRect.width, blueRect.height, blueRect.scale);
+
+                var point = blueRect.mapFromItem(yellowRect, 5, 5);
+                console.log("point:", point.x, point.y);
+
+                blueRect.scale += 1
+
+                var point2 = blueRect.mapFromItem(yellowRect, 5, 5);
+                console.log("point2:", point2.x, point2.y);
+
+                blueRect.x += ((point2.x - point.x) * blueRect.scale)
+                blueRect.y += ((point2.y - point.y) * blueRect.scale)
+            }
+        }
+    }
+    */
     PinchArea {
 
+        id: pinchArea
         anchors.fill: parent
 
-        /*
-        pinch.target: content
-        pinch.minimumScale: 0.1
-        pinch.maximumScale: 10
-        */
+        //pinch.target: content
+        //pinch.minimumScale: 0.1
+        //pinch.maximumScale: 10
 
-        property real previousPoint1x: 0
-        property real previousPoint1y: 0
-        property real previousPoint2x: 0
-        property real previousPoint2y: 0
+        Rectangle {
+            id: centerMark
+            x: 0; y:0
+            width: 5; height: 5
+            color: "red"
+            radius: 5
+        }
 
         Item {
             id: content
 
             x: 0
             y: 0
-            width: mainWindow.width
-            height: mainWindow.height
+            width: 500
+            height: 500
 
             Rectangle {
                 x: 10; y: 10; width: 10; height: 10
@@ -42,22 +104,22 @@ ApplicationWindow {
             }
 
             Rectangle {
-                x: 200; y: 10; width: 10; height: 10
+                x: 180; y: 10; width: 10; height: 10
                 color: "green"
             }
 
             Rectangle {
-                x: 10; y: 200; width: 10; height: 10
+                x: 10; y: 180; width: 10; height: 10
                 color: "blue"
             }
 
             Rectangle {
-                x: 200; y: 200; width: 10; height: 10
+                x: 180; y: 180; width: 10; height: 10
                 color: "yellow"
             }
 
             Rectangle {
-                x: 100; y: 100; width: 10; height: 10
+                x: 95; y: 95; width: 10; height: 10
                 color: "gray"
             }
         }
@@ -69,52 +131,34 @@ ApplicationWindow {
             property Rectangle highlightItem : null;
             property var originPointX : null;
             property var originPointY : null;
-        }
-
-        onPinchStarted: {
-            previousPoint1x = pinch.point1.x;
-            previousPoint1y = pinch.point1.y;
-            previousPoint2x = pinch.point2.x;
-            previousPoint2y = pinch.point2.y;
+            onClicked: {
+                content.x = 0;
+                content.y = 0;
+                content.scale = 1;
+            }
         }
 
         onPinchUpdated: {
 
-            //var oldScale = content.scale;
+            // store mapping before and after scaling
+            var point = content.mapFromItem(pinchArea, pinch.previousCenter.x, pinch.previousCenter.y);
 
-            var panOffset1X = pinch.point1.x - previousPoint1x;
-            var panOffset1Y = pinch.point1.y - previousPoint1y;
-            var panOffset2X = pinch.point2.x - previousPoint2x;
-            var panOffset2Y = pinch.point2.y - previousPoint2y;
-
-            // scroll scaled to pinched position
-            //var widthDiff = (content.width * content.scale) - (content.width * oldScale);
-            //var heightDiff = (content.height * content.scale) - (content.height * oldScale);
-
-            //content.x -= widthDiff / 2;
-            //content.y -= heightDiff / 2;
-
-            content.x += panOffset1X * content.scale;
-            content.x += panOffset2X * content.scale;
-            content.y += panOffset1Y * content.scale;
-            content.y += panOffset2Y * content.scale;
-
+            // apply scaling
             content.scale += (pinch.scale - pinch.previousScale);
 
-            // don't scale to negative
-            if (content.scale < 0.1)
-                content.scale = 0.1;
+            var point2 = content.mapFromItem(pinchArea, pinch.previousCenter.x, pinch.previousCenter.y);
 
-            // update previous point values
-            previousPoint1x = pinch.point1.x;
-            previousPoint1y = pinch.point1.y;
-            previousPoint2x = pinch.point2.x;
-            previousPoint2y = pinch.point2.y;
+            // move content according to movement of translated points
+            content.x += ((point2.x - point.x) * content.scale)
+            content.y += ((point2.y - point.y) * content.scale)
+
+            // dragging
+            content.x += pinch.center.x - pinch.previousCenter.x;
+            content.y += pinch.center.y - pinch.previousCenter.y;
         }
 
         onPinchFinished: {
             //content.update();
         }
     }
-
 }
